@@ -56,8 +56,8 @@ int writerCounter = 0; // ReaderCounter shows NULL
 int itemIndex = -1;
 
 /* Prototypes */
-void *writeFileThread(void*);
-void *readFileThread(void*);
+void *writeFileThread();
+void *readFileThread();
 void pushDataToSharedBuffer(int index, char* data);
 void popDataFromSharedBuffer();
 
@@ -78,7 +78,7 @@ void popDataFromSharedBuffer(void)
 }
 
 
-void *readFileThread(void*) {
+void *readFileThread() {
     char *buffer = (char *) malloc(sizeof(char) *MAX_BUF_SIZE);
     if (buffer == NULL) {
         printf("Error allocating memory of line buffer.");
@@ -87,7 +87,6 @@ void *readFileThread(void*) {
     
     while(fgets(buffer, MAX_BUF_SIZE, fpReader) != NULL) {
         pthread_mutex_lock( &mutexReader );
-        printf("Thread id:%d\n",pthread_self());
         printf("buffer: %s\n", buffer);
         
         if(itemIndex < SIZE_OF_BUF_ELEMS - 1)
@@ -108,7 +107,7 @@ void *readFileThread(void*) {
 }
 
 
-void *writeFileThread(void*)
+void *writeFileThread()
 {
     pthread_mutex_lock(&mutexWriter);
 
@@ -121,7 +120,7 @@ void *writeFileThread(void*)
 
         if(writerCounter <= 15){
             popDataFromSharedBuffer();
-            fprintf(fpWriter,"%s",sharedBufferData[writerCounter]->buffer);
+            fprintf(fpWriter,"%s",(char*)sharedBufferData[writerCounter]->buffer);
         }else
             cb.count--;
 
@@ -192,7 +191,7 @@ int main(int argc, char ** argv) {
     
     int m;
     for(m = 0; m < SIZE_OF_BUF_ELEMS; m++){
-        printf("%s\n",sharedBufferData[m]);
+        printf("%s\n",(char*)sharedBufferData[m]);
     }
 
     
