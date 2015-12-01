@@ -4,7 +4,7 @@ LDFLAGS=-pthread
 OBJ = main.o
 
 %.o: %.c $(DEPS)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $< -ggdb
 
 main: $(OBJ)
-	gcc $(CFLAGS) -o $@ $^ $(LDFLAGS)
+	gcc $(CFLAGS) -o $@ $^ $(LDFLAGS) -ggdb
