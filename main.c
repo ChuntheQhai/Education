@@ -32,52 +32,35 @@ pthread_mutex_t mutexWriter = PTHREAD_MUTEX_INITIALIZER;
 struct rowData **sharedBufferData;
 
 
-
 struct rowData {
     char *buffer[MAX_BUF_SIZE];
     int availability;
 };
 
 typedef struct Circular{
-    struct rowData *in;
-    char *out;
-    struct rowData *end;
     int count;
-    char full;
 }Circular;
 
-
-typedef struct SharedBuffer {
-    struct rowData *data;
-}ShareBuffer;
-
-
-
-
 /* Shared Buffer */
-struct SharedBuffer sharedBuffer;
 struct Circular cb;
-
 char *writerBuffer;
-
-/* Circular Buffer */
 
 
 
 /* Global Variables */
 FILE *fpReader;
 FILE *fpWriter;
-int readAccessLine;
 int readerCounter = -1; // ReaderCounter shows NULL
 int writerCounter = 0; // ReaderCounter shows NULL
-
 int itemIndex = -1;
 
 /* Prototypes */
-int addSharedBuffer(int index, struct rowData data);
-int getSharedBuffer(int index, struct rowData *data);
-void readFileAtIndex(int index, char* buffer, struct rowData data);
-void *readFileThread(int index);
+void *writeFileThread();
+void *readFileThread();
+void pushDataToSharedBuffer(int index, char* data);
+void popDataFromSharedBuffer();
+
+
 
 
 /* Methods for Circular SharedBuffer */
@@ -85,19 +68,13 @@ void pushDataToSharedBuffer(int index, char* data)
 {
     memcpy(sharedBufferData[index]->buffer, data,sizeof(data));
     sharedBufferData[index]->availability = TRUE;
-    
     cb.count++;
-    
-
 }
 
 void popDataFromSharedBuffer()
 {
     cb.count--;
 }
-
-
-
 
 
 void *readFileThread() {
@@ -127,7 +104,6 @@ void *readFileThread() {
         free(buffer);
     
     pthread_exit(NULL);
-
 }
 
 
@@ -154,14 +130,11 @@ void *writeFileThread()
 
     fclose(fpWriter);
     pthread_mutex_unlock(&mutexWriter);
-
-
     pthread_exit(NULL);
 }
 
 int main(int argc, char ** argv) {
     /* Global iniatialization */
-    readAccessLine = 0;
     
     
     fpWriter = fopen(OUTPUT_FILE_NAME,"w");
@@ -188,12 +161,8 @@ int main(int argc, char ** argv) {
         }
     
     /* Circular Buffer Pointer Initialization */
-    cb.in = NULL;
-    cb.out = NULL;
-    cb.full = 0;
     cb.count = -1;
-
-    cb.end = &sharedBuffer.data[SIZE_OF_BUF_ELEMS];
+    
     
     
     fpReader = fopen(argv[1], "r");
