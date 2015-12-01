@@ -56,8 +56,8 @@ int writerCounter = 0; // ReaderCounter shows NULL
 int itemIndex = -1;
 
 /* Prototypes */
-void *writeFileThread();
-void *readFileThread();
+void *writeFileThread(void*);
+void *readFileThread(void*);
 void pushDataToSharedBuffer(int index, char* data);
 void popDataFromSharedBuffer();
 
@@ -72,13 +72,13 @@ void pushDataToSharedBuffer(int index, char* data)
     cb.count++;
 }
 
-void popDataFromSharedBuffer()
+void popDataFromSharedBuffer(void)
 {
     cb.count--;
 }
 
 
-void *readFileThread() {
+void *readFileThread(void*) {
     char *buffer = (char *) malloc(sizeof(char) *MAX_BUF_SIZE);
     if (buffer == NULL) {
         printf("Error allocating memory of line buffer.");
@@ -108,7 +108,7 @@ void *readFileThread() {
 }
 
 
-void *writeFileThread()
+void *writeFileThread(void*)
 {
     pthread_mutex_lock(&mutexWriter);
 
@@ -147,19 +147,19 @@ int main(int argc, char ** argv) {
     /* Shared Buffer Initialization */
     
         // Allocate 16 pointers, an array
-        sharedBufferData =  malloc(SIZE_OF_BUF_ELEMS * sizeof(struct rowData * ));
+        sharedBufferData =  (struct rowData**) malloc(SIZE_OF_BUF_ELEMS * sizeof(struct rowData * ));
     
     
         // Allocate 16 structs and have array point to them
         int i;
         for (i = 0; i < SIZE_OF_BUF_ELEMS; i++)
         {
-            sharedBufferData[i] = malloc(sizeof(struct rowData *));
+            sharedBufferData[i] = *(struct rowData**) malloc(sizeof(struct rowData *));
         }
     
         int j;
         for (j = 0; j < SIZE_OF_BUF_ELEMS; j++) {
-            strcpy(sharedBufferData[j]->buffer,"");
+            strcpy((char*)sharedBufferData[j]->buffer,"");
             sharedBufferData[j]->availability = FALSE;
         }
     
