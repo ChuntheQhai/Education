@@ -11,6 +11,7 @@
 #include <semaphore.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 #define TRUE 1
 #define FALSE 0
@@ -150,14 +151,16 @@ int main(int argc, char ** argv) {
     
     
         // Allocate 16 structs and have array point to them
-        for (int i = 0; i < SIZE_OF_BUF_ELEMS; i++)
+        int i;
+        for (i = 0; i < SIZE_OF_BUF_ELEMS; i++)
         {
             sharedBufferData[i] = malloc(sizeof(struct rowData *));
         }
     
-        for (int i = 0; i < SIZE_OF_BUF_ELEMS; i++) {
-            strcpy(sharedBufferData[i]->buffer,"");
-            sharedBufferData[i]->availability = FALSE;
+        int j;
+        for (j = 0; j < SIZE_OF_BUF_ELEMS; j++) {
+            strcpy(sharedBufferData[j]->buffer,"");
+            sharedBufferData[j]->availability = FALSE;
         }
     
     /* Circular Buffer Pointer Initialization */
@@ -175,32 +178,36 @@ int main(int argc, char ** argv) {
     pthread_t readerThreads[3];
 
     
-    for (int i = 0; i < 3; i++)
+    int k;
+    for (k = 0; k < 3; k++)
     {
-        pthread_create(&readerThreads[i], NULL, readFileThread, NULL);
+        pthread_create(&readerThreads[k], NULL, readFileThread, NULL);
     }
     
-    for (int i = 0; i < 3; i++){
-        pthread_join(readerThreads[i], NULL);
+    int l;
+    for (l = 0; l < 3; l++){
+        pthread_join(readerThreads[l], NULL);
     }
 
     
-
-    for(int i = 0; i < SIZE_OF_BUF_ELEMS; i++){
-        printf("%s\n",sharedBufferData[i]);
+    int m;
+    for(m = 0; m < SIZE_OF_BUF_ELEMS; m++){
+        printf("%s\n",sharedBufferData[m]);
     }
 
     
     pthread_t writerThreads[3];
     
-    for (int i = 0; i < 3; i++)
+    int n;
+    for (n = 0; n < 3; n++)
     {
-        pthread_create(&writerThreads[i], NULL, writeFileThread, NULL);
+        pthread_create(&writerThreads[n], NULL, writeFileThread, NULL);
     }
     
-    for (int i = 0; i < 3; i++)
+    int o;
+    for (o = 0; o < 3; o++)
     {
-        pthread_join(writerThreads[i], NULL);
+        pthread_join(writerThreads[o], NULL);
     }
 
     return 0;
