@@ -7,4 +7,4 @@ OBJ = main.o
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 main: $(OBJ)
-	gcc $(CFLAGS) -o $@ $^ @(LDFLAGS)
+	gcc $(CFLAGS) -o $@ $^ $(LDFLAGS)

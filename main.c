@@ -180,7 +180,7 @@ int main(int argc, char ** argv) {
     int k;
     for (k = 0; k < 3; k++)
     {
-        pthread_create(&readerThreads[k], NULL, readFileThread, NULL);
+        pthread_create(&readerThreads[k], NULL, &readFileThread, NULL);
     }
     
     int l;
@@ -200,7 +200,7 @@ int main(int argc, char ** argv) {
     int n;
     for (n = 0; n < 3; n++)
     {
-        pthread_create(&writerThreads[n], NULL, writeFileThread, NULL);
+        pthread_create(&writerThreads[n], NULL, &writeFileThread, NULL);
     }
     
     int o;
