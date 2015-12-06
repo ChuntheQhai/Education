@@ -11,6 +11,7 @@
 #include <semaphore.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 #define TRUE 1
 #define FALSE 0
@@ -32,136 +33,106 @@ pthread_mutex_t mutexWriter = PTHREAD_MUTEX_INITIALIZER;
 struct rowData **sharedBufferData;
 
 
-
 struct rowData {
     char *buffer[MAX_BUF_SIZE];
     int availability;
 };
 
 typedef struct Circular{
-    struct rowData *in;
-    char *out;
-    struct rowData *end;
     int count;
-    char full;
 }Circular;
 
-
-typedef struct SharedBuffer {
-    struct rowData *data;
-}ShareBuffer;
-
-
-
-
 /* Shared Buffer */
-struct SharedBuffer sharedBuffer;
 struct Circular cb;
-
 char *writerBuffer;
-
-/* Circular Buffer */
 
 
 
 /* Global Variables */
 FILE *fpReader;
 FILE *fpWriter;
-int readAccessLine;
 int readerCounter = -1; // ReaderCounter shows NULL
 int writerCounter = 0; // ReaderCounter shows NULL
-
 int itemIndex = -1;
 
 /* Prototypes */
-int addSharedBuffer(int index, struct rowData data);
-int getSharedBuffer(int index, struct rowData *data);
-void readFileAtIndex(int index, char* buffer, struct rowData data);
-void *readFileThread(int index);
+void *writeFileThread();
+void *readFileThread();
+void pushDataToSharedBuffer(int index, char* data);
+void popDataFromSharedBuffer();
+
+
 
 
 /* Methods for Circular SharedBuffer */
 void pushDataToSharedBuffer(int index, char* data)
 {
-    memcpy(sharedBufferData[index]->buffer, data,sizeof(data));
+    memcpy((char*)sharedBufferData[index]->buffer, data,sizeof(data));
     sharedBufferData[index]->availability = TRUE;
-    
     cb.count++;
-    
-
 }
 
-void popDataFromSharedBuffer()
+void popDataFromSharedBuffer(void)
 {
     cb.count--;
 }
 
 
+void *readFileThread(void *args) {
 
+    pthread_mutex_lock( &mutexReader );
+    char *buffer = (char*) malloc(MAX_BUF_SIZE);
+    
 
-
-void *readFileThread() {
-    char *buffer = (char *) malloc(sizeof(char) *MAX_BUF_SIZE);
     if (buffer == NULL) {
         printf("Error allocating memory of line buffer.");
         exit(1);
     }
     
     while(fgets(buffer, MAX_BUF_SIZE, fpReader) != NULL) {
-        pthread_mutex_lock( &mutexReader );
-        printf("Thread id:%d\n",pthread_self());
-        printf("buffer: %s\n", buffer);
         
         if(itemIndex < SIZE_OF_BUF_ELEMS - 1)
             itemIndex++;
         else
             itemIndex = 0;
-
+        
         pushDataToSharedBuffer(itemIndex,buffer);
-        pthread_mutex_unlock( &mutexReader );
     }
     
-    fclose(fpReader);
     
     if (buffer)
         free(buffer);
     
-    pthread_exit(NULL);
+    pthread_mutex_unlock( &mutexReader );
 
+    
+    pthread_exit(NULL);
 }
 
 
 void *writeFileThread()
 {
     pthread_mutex_lock(&mutexWriter);
-
-    fpWriter = fopen(OUTPUT_FILE_NAME, "a");
-    if (fpWriter == NULL) {
-        printf("Cannot write access to the file.");
-    }
-
+    
+   
+    
     while(cb.count >= 0) {
-
         if(writerCounter <= 15){
             popDataFromSharedBuffer();
-            fprintf(fpWriter,"%s",sharedBufferData[writerCounter]->buffer);
+            fprintf(fpWriter,"%s\n",(char*)sharedBufferData[writerCounter]->buffer);
         }else
             cb.count--;
-
+        
         writerCounter++;
     }
- 
-
-    fclose(fpWriter);
+    
+    
     pthread_mutex_unlock(&mutexWriter);
-
-
     pthread_exit(NULL);
 }
 
 int main(int argc, char ** argv) {
     /* Global iniatialization */
-    readAccessLine = 0;
     
     
     fpWriter = fopen(OUTPUT_FILE_NAME,"w");
@@ -169,31 +140,29 @@ int main(int argc, char ** argv) {
     
     pthread_mutex_init(&mutexReader, NULL);
     pthread_mutex_init(&mutexWriter, NULL);
-
+    
     /* Shared Buffer Initialization */
     
-        // Allocate 16 pointers, an array
-        sharedBufferData =  malloc(SIZE_OF_BUF_ELEMS * sizeof(struct rowData * ));
+    // Allocate 16 pointers, an array
+    sharedBufferData =  (struct rowData**) malloc(SIZE_OF_BUF_ELEMS * sizeof(struct rowData * ));
     
     
-        // Allocate 16 structs and have array point to them
-        for (int i = 0; i < SIZE_OF_BUF_ELEMS; i++)
-        {
-            sharedBufferData[i] = malloc(sizeof(struct rowData *));
-        }
+    // Allocate 16 structs and have array point to them
+    int i;
+    for (i = 0; i < SIZE_OF_BUF_ELEMS; i++)
+    {
+        sharedBufferData[i] = (struct rowData*) malloc(sizeof(struct rowData *));
+    }
     
-        for (int i = 0; i < SIZE_OF_BUF_ELEMS; i++) {
-            strcpy(sharedBufferData[i]->buffer,"");
-            sharedBufferData[i]->availability = FALSE;
-        }
+    int j;
+    for (j = 0; j < SIZE_OF_BUF_ELEMS; j++) {
+        strcpy((char*)sharedBufferData[j]->buffer,"");
+        sharedBufferData[j]->availability = FALSE;
+    }
     
     /* Circular Buffer Pointer Initialization */
-    cb.in = NULL;
-    cb.out = NULL;
-    cb.full = 0;
     cb.count = -1;
-
-    cb.end = &sharedBuffer.data[SIZE_OF_BUF_ELEMS];
+    
     
     
     fpReader = fopen(argv[1], "r");
@@ -203,37 +172,42 @@ int main(int argc, char ** argv) {
     }
     
     
-    pthread_t readerThreads[3];
+    
+    
+    pthread_t readerThread1,readerThread2,readerThread3;
+    
+    
+    pthread_create(&readerThread1,NULL,readFileThread, NULL);
+    pthread_create(&readerThread2,NULL,readFileThread, NULL);
+    pthread_create(&readerThread3,NULL,readFileThread, NULL);
+    
+    
+    pthread_join(readerThread1, NULL);
+    pthread_join(readerThread2, NULL);
+    pthread_join(readerThread3, NULL);
+    
 
     
-    for (int i = 0; i < 3; i++)
-    {
-        pthread_create(&readerThreads[i], NULL, readFileThread, NULL);
+    
+    fpWriter = fopen(OUTPUT_FILE_NAME, "a");
+    
+    if (fpWriter == NULL) {
+        printf("File not ready to write");
     }
     
-    for (int i = 0; i < 3; i++){
-        pthread_join(readerThreads[i], NULL);
-    }
-
+    pthread_t writerThread1,writerThread2,writerThread3;
     
-
-    for(int i = 0; i < SIZE_OF_BUF_ELEMS; i++){
-        printf("%s\n",sharedBufferData[i]);
-    }
-
+    pthread_create(&writerThread1,NULL,writeFileThread, NULL);
+    pthread_create(&writerThread2,NULL,writeFileThread, NULL);
+    pthread_create(&writerThread3,NULL,writeFileThread, NULL);;
     
-    pthread_t writerThreads[3];
+    pthread_join(writerThread1, NULL);
+    pthread_join(writerThread2, NULL);
+    pthread_join(writerThread3, NULL);
     
-    for (int i = 0; i < 3; i++)
-    {
-        pthread_create(&writerThreads[i], NULL, writeFileThread, NULL);
-    }
+    fclose(fpWriter);
     
-    for (int i = 0; i < 3; i++)
-    {
-        pthread_join(writerThreads[i], NULL);
-    }
-
+    
     return 0;
 }
 

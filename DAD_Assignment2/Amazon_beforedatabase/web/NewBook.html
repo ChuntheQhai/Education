@@ -1,0 +1,21 @@
+<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01 Transitional//EN'>
+<html>
+  <head>
+    <title>Enter New Book</title>
+    <meta http-equiv='Content-Type' content='text/html; charset=UTF-8'>
+  </head>
+  <body>
+  <form method='post'>
+    <table border='1' bgcolor='pink'>
+        <tr><th><img src='books.jpg'/></th><th colspan=3' bgcolor='green'><h2>New Record Entry</h2></th></tr>
+    <tr><td rowspan='8' bgcolor='black'>&nbsp;</td><td title='Not more than 4 characters'>ID</td><td bgcolor='red'>&nbsp;</td><td><input type='text' name='id' value='' size='4' /></td></tr>    
+    <tr><td  title='Not more that 64 characters'>TITLE</td><td bgcolor='red'>&nbsp;</td><td><input type='text' name='title' value='' size='64' /></td></tr>
+    <tr><td  title='Not more that 32 characters'>AUTHOR</td><td bgcolor='red'>&nbsp;</td><td><input type='text' name='author' value='' size='32' /></td></tr>
+    <tr><td>PRICE</td><td bgcolor='red'>&nbsp;</td><td><input type='text' name='price' value='' /></td></tr>
+    <tr><td>YEAR</td><td bgcolor='red'>&nbsp;</td><td><input type='text' name='year' value='' size='4' /></td></tr>
+    <tr><td colspan='2'  title='Not more that 128 characters'>DESC.</td><td><textarea name='description' rows='3' cols='40'></textarea></td></tr>
+    <tr><td>INVENTORY</td><td bgcolor='red'>&nbsp;</td><td><input type='text' name='inventory' value='' size='5' /></td></tr>
+    <tr><th colspan='3'><input type='submit' name ='Add' value='Add'/><input type='submit' name ='Cancel' value='Cancel'/></th></tr>
+    </table>
+</form>
+</body></html>
